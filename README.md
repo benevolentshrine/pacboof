@@ -76,6 +76,20 @@ Required dependencies (installed automatically):
 - `yay`: AUR helper
 - `pacman`: Native package manager
 
+## 🐛 Debugging & Error Handling
+
+Pacboof implements a structured error handling and logging system to ensure reliability.
+
+### Logs
+All actions and errors are logged to:
+`~/.local/state/pacboof/pacboof.log`
+
+### Crash Recovery
+If the application encounters a critical error:
+1.  An automatic **Error Trap** catches the crash.
+2.  A **GUI Error Dialogue** (via Rofi) appears with the exact error line and command.
+3.  The incident is logged to the log file for debugging.
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
