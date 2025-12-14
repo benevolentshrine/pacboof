@@ -12,6 +12,31 @@ A simple, beautiful Arch Linux package manager using rofi & fzf.
 - **Smart Removal**: Uninstall packages with multi-select
 - **Themed**: Includes a custom modern Rofi theme
 
+## How it Works
+
+```mermaid
+graph TD
+    A[Start Pacboof] --> B{Main Menu Rofi}
+    
+    B -->|Install Native| C[FZF Browser Pacman]
+    B -->|Install AUR| D[FZF Browser AUR]
+    B -->|Remove| E[FZF Browser Installed]
+    
+    B -->|IDEs| F[Curated List Rofi]
+    B -->|Dev Langs| G[Curated List Rofi]
+    B -->|TUI Apps| H[FZF TUI Apps Filter]
+    
+    C --> I[Terminal Install]
+    D --> I
+    E --> J[Terminal Remove]
+    F --> I
+    G --> I
+    H --> I
+    
+    I --> K[Done]
+    J --> K
+```
+
 ## Installation
 
 Manually install by cloning the repository:
@@ -50,6 +75,10 @@ Required dependencies (installed automatically):
 - `fzf`: Package browser
 - `yay`: AUR helper
 - `pacman`: Native package manager
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 

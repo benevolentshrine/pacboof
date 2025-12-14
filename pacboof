@@ -10,8 +10,35 @@ set -euo pipefail
 # ============================================================================
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/pacboof"
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/pacboof"
+LOG_FILE="$LOG_DIR/pacboof.log"
 USER_THEME="$CONFIG_DIR/pacboof.rasi"
 SYSTEM_THEME="/usr/share/pacboof/pacboof.rasi"
+
+# Setup logging
+mkdir -p "$LOG_DIR"
+exec 2> >(tee -a "$LOG_FILE")
+
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $1" >> "$LOG_FILE"
+}
+
+log_error() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $1" >> "$LOG_FILE"
+}
+
+error_handler() {
+    local line_no=$1
+    local command=$2
+    local error_code=$3
+    log_error "Error on line $line_no: Command '$command' exited with status $error_code"
+    
+    if command -v rofi &>/dev/null; then
+        rofi -e "❌ CRITICAL ERROR\n\nCommand: $command\nLine: $line_no\nExit Code: $error_code\n\nCheck log at:\n$LOG_FILE"
+    fi
+}
+
+trap 'error_handler ${LINENO} "$BASH_COMMAND" $?' ERR
 
 # Use user theme if exists, otherwise system theme
 if [[ -f "$USER_THEME" ]]; then
@@ -165,6 +192,8 @@ extract_package_name() {
 install_package() {
     local package="$1"
     local use_aur="${2:-false}"
+    
+    log "Starting installation of $package (AUR: $use_aur)"
     
     local terminal_cmd
     terminal_cmd=$(detect_terminal)
