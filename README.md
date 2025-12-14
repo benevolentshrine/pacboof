@@ -1,6 +1,7 @@
 # pacboof
 
-A simple, beautiful Arch Linux package manager<p align="center">
+A simple, beautiful Arch Linux package manager
+> Heavily inspired by the Omarchy installer menu<p align="center">
   <img src="screenshots/pacboof%20main.png" alt="Main Menu" width="45%">
   <img src="screenshots/pacboof%20native.png" alt="Native Install" width="45%">
   <br>
