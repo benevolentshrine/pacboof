@@ -353,6 +353,10 @@ main() {
             local selected
             selected=$(show_curated_menu "Select IDE" "$ide_list")
             
+            if [[ -n "$selected" ]]; then
+                local package
+                package=$(extract_package_name "$selected")
+                install_package "$package" true  # Most IDEs are in AUR
             else
                 # If no selection, loop back (do nothing)
                 true
@@ -364,6 +368,10 @@ main() {
             local selected
             selected=$(show_curated_menu "Select Language" "$dev_list")
             
+            if [[ -n "$selected" ]]; then
+                local package
+                package=$(extract_package_name "$selected")
+                install_package "$package" false  # Languages are in official repos
             else
                 # If no selection, loop back (do nothing)
                 true
