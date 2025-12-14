@@ -46,7 +46,7 @@ graph TD
 Manually install by cloning the repository:
 
 ```bash
-git clone https://github.com/yourusername/pacboof.git
+git clone https://github.com/benevolentshrine/pacboof.git
 cd pacboof
 ./install.sh
 ```
