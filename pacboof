@@ -224,9 +224,9 @@ install_package() {
     terminal_cmd=$(detect_terminal)
     
     if [[ "$use_aur" == "true" ]]; then
-        $terminal_cmd bash -c "yay -S $package"
+        $terminal_cmd bash -c "yay -S $package; echo; read -p 'Press Enter to continue...' -n1 -s"
     else
-        $terminal_cmd bash -c "sudo pacman -S $package"
+        $terminal_cmd bash -c "sudo pacman -S $package; echo; read -p 'Press Enter to continue...' -n1 -s"
     fi
 }
 
@@ -262,7 +262,9 @@ open_interactive_install() {
                 --bind='ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up' \
                 --header='  SPACE: select | ENTER: install | ESC: cancel  ' | \
             xargs -ro yay -S
+            xargs -ro yay -S
             wait
+            echo; read -p 'Press Enter to continue...' -n1 -s
         "
     else
         # Use pacman with fzf for TUI browsing
@@ -277,7 +279,9 @@ open_interactive_install() {
                 --bind='ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up' \
                 --header='  SPACE: select | ENTER: install | ESC: cancel  ' | \
             xargs -ro sudo pacman -S
+            xargs -ro sudo pacman -S
             wait
+            echo; read -p 'Press Enter to continue...' -n1 -s
         "
     fi
 }
@@ -303,7 +307,9 @@ open_remove_packages() {
             --header='  SPACE: select | ENTER: remove | ESC: cancel  ' | \
             --header='  SPACE: select | ENTER: remove | ESC: cancel  ' | \
         xargs -ro sudo pacman -Rns
+        xargs -ro sudo pacman -Rns
         wait
+        echo; read -p 'Press Enter to continue...' -n1 -s
     "
 }
 
@@ -347,10 +353,9 @@ main() {
             local selected
             selected=$(show_curated_menu "Select IDE" "$ide_list")
             
-            if [[ -n "$selected" ]]; then
-                local package
-                package=$(extract_package_name "$selected")
-                install_package "$package" true  # Most IDEs are in AUR
+            else
+                # If no selection, loop back (do nothing)
+                true
             fi
             ;;
         "🔧 Development Languages")
@@ -359,10 +364,9 @@ main() {
             local selected
             selected=$(show_curated_menu "Select Language" "$dev_list")
             
-            if [[ -n "$selected" ]]; then
-                local package
-                package=$(extract_package_name "$selected")
-                install_package "$package" false  # Languages are in official repos
+            else
+                # If no selection, loop back (do nothing)
+                true
             fi
             ;;
         "⌨️  TUI Apps")
@@ -394,7 +398,9 @@ main() {
                         yay -S {}
                     fi
                 '
+                '
                 wait
+                echo; read -p 'Press Enter to continue...' -n1 -s
             "
             ;;
     esac
