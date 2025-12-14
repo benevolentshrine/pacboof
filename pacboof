@@ -224,9 +224,9 @@ install_package() {
     terminal_cmd=$(detect_terminal)
     
     if [[ "$use_aur" == "true" ]]; then
-        $terminal_cmd bash -c "yay -S $package" &
+        $terminal_cmd bash -c "yay -S $package"
     else
-        $terminal_cmd bash -c "sudo pacman -S $package" &
+        $terminal_cmd bash -c "sudo pacman -S $package"
     fi
 }
 
@@ -263,7 +263,7 @@ open_interactive_install() {
                 --header='  SPACE: select | ENTER: install | ESC: cancel  ' | \
             xargs -ro yay -S
             wait
-        " &
+        "
     else
         # Use pacman with fzf for TUI browsing
         $terminal_cmd bash -c "
@@ -278,7 +278,7 @@ open_interactive_install() {
                 --header='  SPACE: select | ENTER: install | ESC: cancel  ' | \
             xargs -ro sudo pacman -S
             wait
-        " &
+        "
     fi
 }
 
@@ -301,9 +301,10 @@ open_remove_packages() {
             --preview='pacman -Qi {1} 2>/dev/null' \
             --preview-window=right:60%:wrap \
             --header='  SPACE: select | ENTER: remove | ESC: cancel  ' | \
+            --header='  SPACE: select | ENTER: remove | ESC: cancel  ' | \
         xargs -ro sudo pacman -Rns
         wait
-    " &
+    "
 }
 
 # ============================================================================
@@ -317,13 +318,14 @@ main() {
         exit 1
     fi
 
-    # Show main menu
-    local choice
-    choice=$(show_main_menu)
+    # Show main menu loop
+    while true; do
+        local choice
+        choice=$(show_main_menu)
 
-    if [[ -z "$choice" ]]; then
-        exit 0
-    fi
+        if [[ -z "$choice" ]]; then
+            exit 0
+        fi
 
     case "$choice" in
         "📦 Install (Native Packages)")
@@ -393,9 +395,10 @@ main() {
                     fi
                 '
                 wait
-            " &
+            "
             ;;
     esac
+    done
 }
 
 main "$@"
