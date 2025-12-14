@@ -76,19 +76,32 @@ Required dependencies (installed automatically):
 - `yay`: AUR helper
 - `pacman`: Native package manager
 
-## 🐛 Debugging & Error Handling
+## 🐛 Troubleshooting & Recovery
 
-Pacboof implements a structured error handling and logging system to ensure reliability.
+Pacboof includes an interactive crash handler. If something goes wrong, you won't be left in the dark.
 
-### Logs
-All actions and errors are logged to:
+### Interactive Error Menu
+If a command fails, a menu will pop up offering to:
+*   **📂 Open Log File**: Instantly view `~/.local/state/pacboof/pacboof.log`.
+*   **📋 Copy Error**: Copy the error details to report to the developer.
+
+### Common Issues & Fixes
+
+**Scenario 1: "fzf not found"**
+*   **Log shows**: `[ERROR] Command 'fzf' exited with status 127`
+*   **Fix**: Install missing dependency: `sudo pacman -S fzf`
+
+**Scenario 2: "yay not found"**
+*   **Log shows**: `[ERROR] Command 'yay' exited with status 127`
+*   **Fix**: Install `yay` (or use `paru` if configured).
+
+**Scenario 3: "Transaction failed"**
+*   **Log shows**: `[ERROR] Command 'sudo pacman -S package' exited with status 1`
+*   **Cause**: You might have cancelled the password prompt or have conflicting packages.
+*   **Fix**: Run `sudo pacman -Syu` manually to check for system issues.
+
+### Logs Location
 `~/.local/state/pacboof/pacboof.log`
-
-### Crash Recovery
-If the application encounters a critical error:
-1.  An automatic **Error Trap** catches the crash.
-2.  A **GUI Error Dialogue** (via Rofi) appears with the exact error line and command.
-3.  The incident is logged to the log file for debugging.
 
 ## Contributing
 

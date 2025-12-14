@@ -34,7 +34,32 @@ error_handler() {
     log_error "Error on line $line_no: Command '$command' exited with status $error_code"
     
     if command -v rofi &>/dev/null; then
-        rofi -e "❌ CRITICAL ERROR\n\nCommand: $command\nLine: $line_no\nExit Code: $error_code\n\nCheck log at:\n$LOG_FILE"
+        # Offer interactive recovery options
+        local choice
+        choice=$(echo -e "📂 Open Log File\n📋 Copy Error to Clipboard\n❌ Close" | \
+            rofi -dmenu \
+            -p "⚠️ Error detected" \
+            -mesg "Command '$command' failed (Line $line_no, Exit $error_code)" \
+            -theme-str 'window {width: 600px;}' \
+            -theme "$THEME_FILE")
+            
+        case "$choice" in
+            "📂 Open Log File")
+                # Try to open with xdg-open, fallback to terminal pager
+                if command -v xdg-open &>/dev/null; then
+                    xdg-open "$LOG_FILE"
+                else
+                    detect_terminal | xargs -I {} bash -c "{} less $LOG_FILE" &
+                fi
+                ;;
+            "📋 Copy Error to Clipboard")
+                if command -v xclip &>/dev/null; then
+                    echo "Command '$command' failed (Line $line_no, Exit $error_code)" | xclip -selection clipboard
+                elif command -v wl-copy &>/dev/null; then
+                    echo "Command '$command' failed (Line $line_no, Exit $error_code)" | wl-copy
+                fi
+                ;;
+        esac
     fi
 }
 
