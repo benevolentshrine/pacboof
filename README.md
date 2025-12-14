@@ -1,10 +1,14 @@
 # pacboof
 
-A simple, beautiful Arch Linux package manager using rofi & fzf.
+A simple, beautiful Arch Linux package manager<p align="center">
+  <img src="screenshots/pacboof%20main.png" alt="Main Menu" width="45%">
+  <img src="screenshots/pacboof%20native.png" alt="Native Install" width="45%">
+  <br>
+  <img src="screenshots/pacboof%20AUR.png" alt="AUR Install" width="45%">
+  <img src="screenshots/pacboof%20languages.png" alt="Languages" width="45%">
+</p>
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-
-## Features
+## ✨ Features
 
 - **Interactive**: Browse all packages using `fzf`
 - **Native & AUR**: Manage official and AUR packages seamlessly
