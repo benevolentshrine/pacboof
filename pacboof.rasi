@@ -1,0 +1,93 @@
+/**
+ * ROFI PACBOOF THEME - Glassmorphic
+ * Transparent glass effect with blur
+ */
+
+* {
+    bg:              #1a1a1aCC;  /* Semi-transparent dark */
+    bg-alt:          #2a2a2aDD;  /* Slightly less transparent */
+    fg:              #ffffffEE;  /* Almost white */
+    fg-alt:          #ccccccBB;  /* Lighter gray */
+    accent:          #88c0d0FF;  /* Light blue accent */
+    accent-alt:      #81a1c1FF;  /* Darker blue */
+    selected:        #3b4252BB;  /* Semi-transparent selected */
+    
+    background-color: transparent;
+    text-color:       @fg;
+}
+
+window {
+    background-color: @bg;
+    border:           2px solid;
+    border-color:     @accent;
+    border-radius:    16px;
+    padding:          0px;
+    width:            55%;
+    transparency:     "real";
+}
+
+mainbox {
+    background-color: transparent;
+    padding:          0px;
+}
+
+inputbar {
+    background-color: @bg-alt;
+    text-color:       @fg;
+    border:           0px 0px 1px 0px solid;
+    border-color:     @accent-alt;
+    border-radius:    16px 16px 0px 0px;
+    padding:          18px 24px;
+    spacing:          10px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    background-color: transparent;
+    text-color:       @accent;
+}
+
+entry {
+    background-color: transparent;
+    text-color:       @fg;
+    placeholder:      "Type to search...";
+    placeholder-color: @fg-alt;
+}
+
+listview {
+    background-color: transparent;
+    spacing:          4px;
+    padding:          16px;
+    scrollbar:        false;
+    lines:            12;
+}
+
+element {
+    background-color: transparent;
+    text-color:       @fg;
+    padding:          12px 18px;
+    border-radius:    12px;
+}
+
+element selected {
+    background-color: @selected;
+    text-color:       @accent;
+}
+
+element-text {
+    background-color: transparent;
+    text-color:       inherit;
+}
+
+message {
+    background-color: @bg-alt;
+    border:           1px solid;
+    border-color:     @accent;
+    border-radius:    12px;
+    padding:          16px;
+}
+
+textbox {
+    background-color: transparent;
+    text-color:       @fg;
+}

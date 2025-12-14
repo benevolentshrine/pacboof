@@ -1,0 +1,347 @@
+#!/usr/bin/env bash
+
+# pacboof - Simple rofi-based package manager for Arch Linux
+# Redesigned for simplicity and ease of use
+
+set -euo pipefail
+
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/pacboof"
+USER_THEME="$CONFIG_DIR/pacboof.rasi"
+SYSTEM_THEME="/usr/share/pacboof/pacboof.rasi"
+
+# Use user theme if exists, otherwise system theme
+if [[ -f "$USER_THEME" ]]; then
+    THEME_FILE="$USER_THEME"
+elif [[ -f "$SYSTEM_THEME" ]]; then
+    THEME_FILE="$SYSTEM_THEME"
+else
+    THEME_FILE=""
+fi
+
+# ============================================================================
+# TERMINAL DETECTION
+# ============================================================================
+
+detect_terminal() {
+    # Try $TERMINAL environment variable first
+    if [[ -n "${TERMINAL:-}" ]]; then
+        if command -v "$TERMINAL" &>/dev/null; then
+            echo "$TERMINAL -e"
+            return 0
+        fi
+    fi
+    
+    # Auto-detect from common terminals
+    # Order: modern GPU-accelerated terminals first, then fallbacks
+    local terminals=(
+        "kitty:-e"
+        "alacritty:-e"
+        "wezterm:start --"
+        "foot:-e"
+        "st:-e"
+        "termite:-e"
+        "urxvt:-e"
+        "xterm:-e"
+        "gnome-terminal:--"
+        "konsole:-e"
+        "xfce4-terminal:-e"
+        "mate-terminal:-e"
+        "lxterminal:-e"
+        "terminator:-e"
+        "tilix:-e"
+    )
+
+    for term_def in "${terminals[@]}"; do
+        local term_name="${term_def%%:*}"
+        local term_flags="${term_def#*:}"
+        
+        if command -v "$term_name" &>/dev/null; then
+            echo "$term_name $term_flags"
+            return 0
+        fi
+    done
+
+    # Ultimate fallback - should exist on any system with X
+    if command -v xterm &>/dev/null; then
+        echo "xterm -e"
+        return 0
+    fi
+    
+    # If we're here, something is very wrong
+    rofi -e "ERROR: No terminal emulator found!\n\nInstall one of:\nkitty, alacritty, xterm, gnome-terminal, etc."
+    return 1
+}
+
+# ============================================================================
+# CURATED PACKAGE LISTS
+# ============================================================================
+
+get_ide_list() {
+    cat << 'EOF'
+💻 Visual Studio Code|code
+🐍 PyCharm Community|pycharm-community-edition
+☕ IntelliJ IDEA Community|intellij-idea-community-edition
+✨ Neovim|neovim
+📝 Sublime Text|sublime-text-4
+EOF
+}
+
+get_development_list() {
+    cat << 'EOF'
+🐍 Python|python
+🦀 Rust|rust
+🐹 Go|go
+☕ Java (OpenJDK)|jdk-openjdk
+📜 JavaScript (Node.js)|nodejs
+💎 Ruby|ruby
+🐘 PHP|php
+🔷 TypeScript|typescript
+🌙 Lua|lua
+⚡ Zig|zig
+EOF
+}
+
+get_tui_list() {
+    cat << 'EOF'
+📊 btop (System Monitor)|btop
+📁 ranger (File Manager)|ranger
+🎵 cmus (Music Player)|cmus
+📝 vim (Text Editor)|vim
+⚡ nvim (Text Editor)|neovim
+🔍 fzf (Fuzzy Finder)|fzf
+📦 yay (AUR Helper)|yay
+🌐 w3m (Web Browser)|w3m
+📧 neomutt (Email)|neomutt
+💬 irssi (IRC Client)|irssi
+EOF
+}
+
+# ============================================================================
+# ROFI FUNCTIONS
+# ============================================================================
+
+show_main_menu() {
+    local theme_arg=""
+    if [[ -f "$THEME_FILE" ]]; then
+        theme_arg="-theme $THEME_FILE"
+    fi
+    
+    cat << 'EOF' | rofi -dmenu -p "pacboof" $theme_arg -no-custom
+📦 Install (Native Packages)
+🚀 Install AUR
+🗑️  Remove Packages
+💻 IDEs
+🔧 Development Languages
+⌨️  TUI Apps
+EOF
+}
+
+show_curated_menu() {
+    local prompt="$1"
+    local list="$2"
+    local theme_arg=""
+    
+    if [[ -f "$THEME_FILE" ]]; then
+        theme_arg="-theme $THEME_FILE"
+    fi
+    
+    echo "$list" | rofi -dmenu -p "$prompt" $theme_arg -format "s"
+}
+
+# ============================================================================
+# INSTALLATION FUNCTIONS
+# ============================================================================
+
+extract_package_name() {
+    local selection="$1"
+    # Extract package name after the |
+    echo "$selection" | cut -d'|' -f2
+}
+
+install_package() {
+    local package="$1"
+    local use_aur="${2:-false}"
+    
+    local terminal_cmd
+    terminal_cmd=$(detect_terminal)
+    
+    if [[ "$use_aur" == "true" ]]; then
+        $terminal_cmd bash -c "yay -S $package" &
+    else
+        $terminal_cmd bash -c "sudo pacman -S $package" &
+    fi
+}
+
+open_interactive_install() {
+    local use_aur="${1:-false}"
+    
+    # Check for fzf first - it's essential for good UX
+    if ! command -v fzf &>/dev/null; then
+        rofi -e "fzf is not installed!\n\nInstall it for package browsing:\nsudo pacman -S fzf\n\nThen try again."
+        return 1
+    fi
+    
+    local terminal_cmd
+    terminal_cmd=$(detect_terminal)
+    
+    if [[ "$use_aur" == "true" ]]; then
+        # Check for yay
+        if ! command -v yay &>/dev/null; then
+            rofi -e "yay is not installed!\n\nInstall it first:\nsudo pacman -S yay"
+            return 1
+        fi
+        
+        # Use yay with fzf for AUR browsing
+        $terminal_cmd bash -c "
+            echo 'Loading AUR packages...'
+            yay -Slq --aur | fzf \
+                --multi \
+                --cycle \
+                --reverse \
+                --prompt='Search AUR packages > ' \
+                --preview='yay -Si {1} 2>/dev/null' \
+                --preview-window=right:60%:wrap \
+                --bind='ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up' \
+                --header='  SPACE: select | ENTER: install | ESC: cancel  ' | \
+            xargs -ro yay -S
+            wait
+        " &
+    else
+        # Use pacman with fzf for TUI browsing
+        $terminal_cmd bash -c "
+            pacman -Slq | fzf \
+                --multi \
+                --cycle \
+                --reverse \
+                --prompt='Search packages > ' \
+                --preview='pacman -Si {1} 2>/dev/null' \
+                --preview-window=right:60%:wrap \
+                --bind='ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up' \
+                --header='  SPACE: select | ENTER: install | ESC: cancel  ' | \
+            xargs -ro sudo pacman -S
+            wait
+        " &
+    fi
+}
+
+open_remove_packages() {
+    # Check for fzf
+    if ! command -v fzf &>/dev/null; then
+        rofi -e "fzf is not installed!\n\nInstall it first:\nsudo pacman -S fzf"
+        return 1
+    fi
+    
+    local terminal_cmd
+    terminal_cmd=$(detect_terminal)
+    
+    $terminal_cmd bash -c "
+        pacman -Qq | fzf \
+            --multi \
+            --cycle \
+            --reverse \
+            --prompt='Remove packages > ' \
+            --preview='pacman -Qi {1} 2>/dev/null' \
+            --preview-window=right:60%:wrap \
+            --header='  SPACE: select | ENTER: remove | ESC: cancel  ' | \
+        xargs -ro sudo pacman -Rns
+        wait
+    " &
+}
+
+# ============================================================================
+# MAIN LOGIC
+# ============================================================================
+
+main() {
+    # Check dependencies
+    if ! command -v rofi &>/dev/null; then
+        echo "ERROR: rofi is not installed" >&2
+        exit 1
+    fi
+
+    # Show main menu
+    local choice
+    choice=$(show_main_menu)
+
+    if [[ -z "$choice" ]]; then
+        exit 0
+    fi
+
+    case "$choice" in
+        "📦 Install (Native Packages)")
+            open_interactive_install false
+            ;;
+        "🚀 Install AUR")
+            if ! command -v yay &>/dev/null; then
+                rofi -e "yay is not installed. Install it first!"
+                exit 1
+            fi
+            open_interactive_install true
+            ;;
+        "🗑️  Remove Packages")
+            open_remove_packages
+            ;;
+        "💻 IDEs")
+            local ide_list
+            ide_list=$(get_ide_list)
+            local selected
+            selected=$(show_curated_menu "Select IDE" "$ide_list")
+            
+            if [[ -n "$selected" ]]; then
+                local package
+                package=$(extract_package_name "$selected")
+                install_package "$package" true  # Most IDEs are in AUR
+            fi
+            ;;
+        "🔧 Development Languages")
+            local dev_list
+            dev_list=$(get_development_list)
+            local selected
+            selected=$(show_curated_menu "Select Language" "$dev_list")
+            
+            if [[ -n "$selected" ]]; then
+                local package
+                package=$(extract_package_name "$selected")
+                install_package "$package" false  # Languages are in official repos
+            fi
+            ;;
+        "⌨️  TUI Apps")
+            # Check for fzf
+            if ! command -v fzf &>/dev/null; then
+                rofi -e "fzf is not installed!\n\nInstall it first:\nsudo pacman -S fzf"
+                exit 1
+            fi
+            
+            local terminal_cmd
+            terminal_cmd=$(detect_terminal)
+            
+            # Search for TUI-related packages and show in fzf
+            $terminal_cmd bash -c "
+                echo 'Searching for TUI applications...'
+                # Search for common TUI-related terms
+                pacman -Ssq 'tui|ncurses|terminal|console|cli' | sort -u | fzf \
+                    --multi \
+                    --cycle \
+                    --reverse \
+                    --prompt='Search TUI Apps > ' \
+                    --preview='pacman -Si {1} 2>/dev/null || yay -Si {1} 2>/dev/null' \
+                    --preview-window=right:60%:wrap \
+                    --header='  SPACE: select | ENTER: install | ESC: cancel  ' | \
+                xargs -I {} bash -c '
+                    if pacman -Si {} &>/dev/null; then
+                        sudo pacman -S {}
+                    else
+                        yay -S {}
+                    fi
+                '
+                wait
+            " &
+            ;;
+    esac
+}
+
+main "$@"

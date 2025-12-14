@@ -1,0 +1,11 @@
+# Ignore system artifacts
+*.pkg.tar.zst
+pkg/
+src/
+*~
+*.swp
+.DS_Store
+
+# Ignore local config backups if any
+*.bak
+*.old

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Pacboof
+GenericName=Package Manager
+Comment=Simple rofi-based package installer for Arch Linux
+Exec=env PATH="${PATH}:${HOME}/.local/bin" pacboof
+Icon=system-software-install
+Terminal=false
+Categories=System;PackageManager;
+Keywords=package;install;pacman;aur;yay;
