@@ -397,7 +397,6 @@ main() {
             
             cat << 'EOF' > "$current_tui_script"
 #!/bin/bash
-set -e
 
 # Cleanup on exit
 tmpfile=$(mktemp)
@@ -421,17 +420,22 @@ if pacman -Ssq 'tui|ncurses|terminal|console|cli' | sort -u | fzf \
         cat "$tmpfile"
         echo
         
-        # Loop explicitly to keep stdin open for user prompts
-        while read -r pkg; do
+        # Use file descriptor 3 to read from file
+        # This keeps stdin (fd 0) available for pacman prompts
+        exec 3< "$tmpfile"
+        while read -r pkg <&3; do
             echo "--------------------------------------------------"
-            echo "Processing $pkg..."
+            echo "Installing: $pkg"
+            echo
             # Check if package exists in official repos
             if pacman -Si "$pkg" &>/dev/null; then
                 sudo pacman -S "$pkg"
             else
                 yay -S "$pkg"
             fi
-        done < "$tmpfile"
+            echo
+        done
+        exec 3<&-
         
         echo
         echo '--------------------------------------------------'
