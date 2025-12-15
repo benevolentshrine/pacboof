@@ -342,7 +342,7 @@ main() {
         "🚀 Install AUR")
             if ! command -v yay &>/dev/null; then
                 rofi -e "yay is not installed. Install it first!"
-                exit 1
+                continue  # Return to menu instead of exiting
             fi
             open_interactive_install true
             ;;
@@ -385,7 +385,7 @@ main() {
             # Check for fzf
             if ! command -v fzf &>/dev/null; then
                 rofi -e "fzf is not installed!\n\nInstall it first:\nsudo pacman -S fzf"
-                exit 1
+                continue  # Return to menu instead of exiting
             fi
             
             local terminal_cmd
