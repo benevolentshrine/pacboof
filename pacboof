@@ -133,13 +133,13 @@ detect_terminal() {
 # ============================================================================
 
 get_ide_list() {
-    # Using specific icon names that are common in icon themes
+    # Using specific binary packages for speed
     cat << EOF
 Zed\0icon\x1fzed|zed
 Sublime Text\0icon\x1fsublime-text|sublime-text
 Kate\0icon\x1fkate|kate
-Visual Studio Code\0icon\x1fvisual-studio-code|visual-studio-code-bin
-Cursor\0icon\x1fcursor|cursor-bin
+Visual Studio Code (Official)\0icon\x1fvisual-studio-code|visual-studio-code-bin
+Cursor (AI Editor)\0icon\x1fcursor|cursor-bin
 Helix\0icon\x1fhelix|helix
 EOF
 }
@@ -395,24 +395,28 @@ main() {
             $terminal_cmd bash -c "
                 echo 'Searching for TUI applications...'
                 # Search for common TUI-related terms
-                pacman -Ssq 'tui|ncurses|terminal|console|cli' | sort -u | fzf \
+                selected=\$(pacman -Ssq 'tui|ncurses|terminal|console|cli' | sort -u | fzf \
                     --multi \
                     --cycle \
                     --reverse \
                     --prompt='Search TUI Apps > ' \
                     --preview='pacman -Si {1} 2>/dev/null || yay -Si {1} 2>/dev/null' \
                     --preview-window=right:60%:wrap \
-                    --header='  SPACE: select | ENTER: install | ESC: cancel  ' | \
-                xargs -I {} bash -c '
-                    if pacman -Si {} &>/dev/null; then
-                        sudo pacman -S {}
-                    else
-                        yay -S {}
-                    fi
-                '
-                echo
-                echo 'Press ENTER to return to menu...'
-                read
+                    --header='  SPACE: select | ENTER: install | ESC: cancel  ')
+                
+                if [[ -n "\$selected" ]]; then
+                    echo "\$selected" | xargs -r -I {} bash -c '
+                        echo "Processing {}..."
+                        if pacman -Si {} &>/dev/null; then
+                            sudo pacman -S {} < /dev/tty
+                        else
+                            yay -S {} < /dev/tty
+                        fi
+                    '
+                    echo
+                    echo 'Press ENTER to return to menu...'
+                    read
+                fi
             "
             ;;
     esac
