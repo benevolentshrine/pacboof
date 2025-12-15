@@ -392,45 +392,64 @@ main() {
             terminal_cmd=$(detect_terminal)
             
             # Search for TUI-related packages and show in fzf
-            $terminal_cmd bash -c "
-                # Create a temp file to store selection
-                tmpfile=\$(mktemp)
-                
-                echo 'Searching for TUI applications...'
-                # Search and save to file
-                pacman -Ssq 'tui|ncurses|terminal|console|cli' | sort -u | fzf \
-                    --multi \
-                    --cycle \
-                    --reverse \
-                    --prompt='Search TUI Apps > ' \
-                    --preview='pacman -Si {1} 2>/dev/null || yay -Si {1} 2>/dev/null' \
-                    --preview-window=right:60%:wrap \
-                    --header='  SPACE: select | ENTER: install | ESC: cancel  ' > "\$tmpfile"
-                
-                if [[ -s "\$tmpfile" ]]; then
-                    echo
-                    echo 'Packages selected:'
-                    cat "\$tmpfile"
-                    echo
-                    
-                    # Use a for loop to process packages sequentially
-                    # stdin remains connected to the terminal for Y/n prompts
-                    for pkg in \$(cat "\$tmpfile"); do
-                        echo "--------------------------------------------------"
-                        echo "Processing \$pkg..."
-                        if pacman -Si "\$pkg" &>/dev/null; then
-                            sudo pacman -S "\$pkg"
-                        else
-                            yay -S "\$pkg"
-                        fi
-                    done
-                    
-                    echo
-                    echo 'Press ENTER to return to menu...'
-                    read
-                fi
-                rm -f "\$tmpfile"
-            "
+            # Create a robust temporary script to escape quoting hell
+            current_tui_script="$LOG_DIR/tui_worker.sh"
+            
+            cat << 'EOF' > "$current_tui_script"
+#!/bin/bash
+set -e
+
+# Cleanup on exit
+tmpfile=$(mktemp)
+trap 'rm -f "$tmpfile"' EXIT
+
+echo 'Searching for TUI applications...'
+
+# Search and save to file
+if pacman -Ssq 'tui|ncurses|terminal|console|cli' | sort -u | fzf \
+    --multi \
+    --cycle \
+    --reverse \
+    --prompt='Search TUI Apps > ' \
+    --preview='pacman -Si {1} 2>/dev/null || yay -Si {1} 2>/dev/null' \
+    --preview-window=right:60%:wrap \
+    --header='  SPACE: select | ENTER: install | ESC: cancel  ' > "$tmpfile"; then
+    
+    if [[ -s "$tmpfile" ]]; then
+        echo
+        echo 'Packages selected:'
+        cat "$tmpfile"
+        echo
+        
+        # Loop explicitly to keep stdin open for user prompts
+        while read -r pkg; do
+            echo "--------------------------------------------------"
+            echo "Processing $pkg..."
+            # Check if package exists in official repos
+            if pacman -Si "$pkg" &>/dev/null; then
+                sudo pacman -S "$pkg"
+            else
+                yay -S "$pkg"
+            fi
+        done < "$tmpfile"
+        
+        echo
+        echo '--------------------------------------------------'
+        echo 'Installation process finished.'
+        echo
+    else
+        echo "No packages selected."
+    fi
+else
+    echo "Selection cancelled."
+fi
+
+echo 'Press ENTER to return to menu...'
+read
+EOF
+            
+            chmod +x "$current_tui_script"
+            $terminal_cmd "$current_tui_script"
             ;;
     esac
     done
