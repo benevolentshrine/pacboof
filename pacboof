@@ -133,27 +133,29 @@ detect_terminal() {
 # ============================================================================
 
 get_ide_list() {
-    cat << 'EOF'
-💻 Visual Studio Code|code
-🐍 PyCharm Community|pycharm-community-edition
-☕ IntelliJ IDEA Community|intellij-idea-community-edition
-✨ Neovim|neovim
-📝 Sublime Text|sublime-text-4
+    # Using specific icon names that are common in icon themes
+    cat << EOF
+Zed\0icon\x1fzed|zed
+Sublime Text\0icon\x1fsublime-text|sublime-text
+Kate\0icon\x1fkate|kate
+Visual Studio Code\0icon\x1fvisual-studio-code|visual-studio-code-bin
+Cursor\0icon\x1fcursor|cursor-bin
+Helix\0icon\x1fhelix|helix
 EOF
 }
 
 get_development_list() {
-    cat << 'EOF'
-🐍 Python|python
-🦀 Rust|rust
-🐹 Go|go
-☕ Java (OpenJDK)|jdk-openjdk
-📜 JavaScript (Node.js)|nodejs
-💎 Ruby|ruby
-🐘 PHP|php
-🔷 TypeScript|typescript
-🌙 Lua|lua
-⚡ Zig|zig
+    cat << EOF
+Python\0icon\x1fpython|python
+Rust\0icon\x1frust|rust
+Go\0icon\x1fgo|go
+Java\0icon\x1fjava|jdk-openjdk
+Node.js\0icon\x1fnodejs|nodejs
+Ruby\0icon\x1fruby|ruby
+PHP\0icon\x1fphp|php
+TypeScript\0icon\x1ftypescript|typescript
+Lua\0icon\x1flua|lua
+Zig\0icon\x1fzig|zig
 EOF
 }
 
@@ -200,8 +202,9 @@ show_curated_menu() {
     if [[ -f "$THEME_FILE" ]]; then
         theme_arg="-theme $THEME_FILE"
     fi
-    
-    echo "$list" | rofi -dmenu -p "$prompt" $theme_arg -format "s"
+    # Use -show-icons and -eh 2 (element height) for better icon visibility if needed, 
+    # but basic -show-icons should work with the \0icon\x1f syntax
+    echo -e "$list" | rofi -dmenu -p "$prompt" $theme_arg -show-icons -format "s"
 }
 
 # ============================================================================
@@ -350,7 +353,8 @@ main() {
             local ide_list
             ide_list=$(get_ide_list)
             local selected
-            selected=$(show_curated_menu "Select IDE" "$ide_list")
+            # Use || true to prevent script exit on ESC (rofi exit code 1)
+            selected=$(show_curated_menu "Select IDE" "$ide_list" || true)
             
             if [[ -n "$selected" ]]; then
                 local package
@@ -365,7 +369,8 @@ main() {
             local dev_list
             dev_list=$(get_development_list)
             local selected
-            selected=$(show_curated_menu "Select Language" "$dev_list")
+            # Use || true to prevent script exit on ESC
+            selected=$(show_curated_menu "Select Language" "$dev_list" || true)
             
             if [[ -n "$selected" ]]; then
                 local package
