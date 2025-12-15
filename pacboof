@@ -393,30 +393,43 @@ main() {
             
             # Search for TUI-related packages and show in fzf
             $terminal_cmd bash -c "
+                # Create a temp file to store selection
+                tmpfile=\$(mktemp)
+                
                 echo 'Searching for TUI applications...'
-                # Search for common TUI-related terms
-                selected=\$(pacman -Ssq 'tui|ncurses|terminal|console|cli' | sort -u | fzf \
+                # Search and save to file
+                pacman -Ssq 'tui|ncurses|terminal|console|cli' | sort -u | fzf \
                     --multi \
                     --cycle \
                     --reverse \
                     --prompt='Search TUI Apps > ' \
                     --preview='pacman -Si {1} 2>/dev/null || yay -Si {1} 2>/dev/null' \
                     --preview-window=right:60%:wrap \
-                    --header='  SPACE: select | ENTER: install | ESC: cancel  ')
+                    --header='  SPACE: select | ENTER: install | ESC: cancel  ' > "\$tmpfile"
                 
-                if [[ -n "\$selected" ]]; then
-                    echo "\$selected" | xargs -r -I {} bash -c '
-                        echo "Processing {}..."
-                        if pacman -Si {} &>/dev/null; then
-                            sudo pacman -S {} < /dev/tty
+                if [[ -s "\$tmpfile" ]]; then
+                    echo
+                    echo 'Packages selected:'
+                    cat "\$tmpfile"
+                    echo
+                    
+                    # Use a for loop to process packages sequentially
+                    # stdin remains connected to the terminal for Y/n prompts
+                    for pkg in \$(cat "\$tmpfile"); do
+                        echo "--------------------------------------------------"
+                        echo "Processing \$pkg..."
+                        if pacman -Si "\$pkg" &>/dev/null; then
+                            sudo pacman -S "\$pkg"
                         else
-                            yay -S {} < /dev/tty
+                            yay -S "\$pkg"
                         fi
-                    '
+                    done
+                    
                     echo
                     echo 'Press ENTER to return to menu...'
                     read
                 fi
+                rm -f "\$tmpfile"
             "
             ;;
     esac
