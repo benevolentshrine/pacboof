@@ -133,29 +133,30 @@ detect_terminal() {
 # ============================================================================
 
 get_ide_list() {
-    # Using specific binary packages for speed
-    cat << EOF
-Zed\0icon\x1fzed|zed
-Sublime Text\0icon\x1fsublime-text|sublime-text
-Kate\0icon\x1fkate|kate
-Visual Studio Code (Official)\0icon\x1fvisual-studio-code|visual-studio-code-bin
-Cursor (AI Editor)\0icon\x1fcursor|cursor-bin
-Helix\0icon\x1fhelix|helix
+    # Only packages available in official Arch repos
+    cat << 'EOF'
+Zed|zed
+Kate|kate
+Helix|helix
+VS Code (OSS)|code
+Neovim|neovim
+Vim|vim
 EOF
 }
 
 get_development_list() {
-    cat << EOF
-Python\0icon\x1fpython|python
-Rust\0icon\x1frust|rust
-Go\0icon\x1fgo|go
-Java\0icon\x1fjava|jdk-openjdk
-Node.js\0icon\x1fnodejs|nodejs
-Ruby\0icon\x1fruby|ruby
-PHP\0icon\x1fphp|php
-TypeScript\0icon\x1ftypescript|typescript
-Lua\0icon\x1flua|lua
-Zig\0icon\x1fzig|zig
+    # Only packages available in official Arch repos
+    cat << 'EOF'
+Python|python
+Rust|rust
+Go|go
+Java (OpenJDK)|jdk-openjdk
+Node.js|nodejs
+Ruby|ruby
+PHP|php
+TypeScript|typescript
+Lua|lua
+Zig|zig
 EOF
 }
 
@@ -202,9 +203,8 @@ show_curated_menu() {
     if [[ -f "$THEME_FILE" ]]; then
         theme_arg="-theme $THEME_FILE"
     fi
-    # Use -show-icons and -eh 2 (element height) for better icon visibility if needed, 
-    # but basic -show-icons should work with the \0icon\x1f syntax
-    echo -e "$list" | rofi -dmenu -p "$prompt" $theme_arg -show-icons -format "s"
+    # Simple format without special icon syntax
+    echo "$list" | rofi -dmenu -p "$prompt" $theme_arg -format "s"
 }
 
 # ============================================================================
@@ -359,7 +359,7 @@ main() {
             if [[ -n "$selected" ]]; then
                 local package
                 package=$(extract_package_name "$selected")
-                install_package "$package" true  # Most IDEs are in AUR
+                install_package "$package" false  # All IDEs are in official repos now
             else
                 # If no selection, loop back (do nothing)
                 true
